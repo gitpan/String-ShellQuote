@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 
-# $Id: test.t,v 1.2 1997-12-07 12:05:40-05 roderick Exp $
+# $Id: test.t,v 1.3 2005/02/10 01:48:17 roderick Exp $
 #
 # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
 # program is free software; you can redistribute it and/or modify it
@@ -9,51 +9,70 @@ use strict;
 
 BEGIN {
     $| = 1;
-    print "1..17\n";
+    print "1..27\n";
 }
 
 use String::ShellQuote;
 
+my $test_num = 0;
 sub ok {
-    my ($n, $result, @info) = @_;
+    my ($result, @info) = @_;
+    $test_num++;
     if ($result) {
-    	print "ok $n\n";
+    	print "ok $test_num\n";
     }
     else {
-    	print "not ok $n\n";
+    	print "not ok $test_num\n";
 	print "# ", @info, "\n" if @info;
     }
 }
 
 my $testsub;
 sub test {
-    my ($n, $want, @args) = @_;
-    my $got = &$testsub(@args);
-    ok $n, $got eq $want, qq[wanted "$want", got "$got"];
+    my ($want, @args) = @_;
+    my $got = eval { &$testsub(@args) };
+    if ($@) {
+	chomp $@;
+	$@ =~ s/ at \S+ line \d+\.?\z//;
+	$got = "die: $@";
+    }
+    my $from_line = (caller)[2];
+    ok $got eq $want,
+	qq{line $from_line\n# wanted [$want]\n# got    [$got]};
 }
 
-my $s = '\\';
-
 $testsub = \&shell_quote;
-test 1, '';
-test 2, 'foo',			'foo';
-test 3, 'foo bar',		qw(foo bar);
-test 4, "'foo*'",		'foo*';
-test 5, "'foo bar'",		'foo bar';
-test 6, "'foo'$s''bar'",	"foo'bar";
-test 7, "$s''foo'",		"'foo";
-test 8, "foo 'bar*'",		qw(foo bar*);
-test 9, "'foo'$s''foo' bar 'baz'$s'", qw(foo'foo bar baz');
-test 10, "'$s'",		"$s";
-test 11, "$s'",			"'";
-test 12, "'$s'$s'",		"$s'";
+test '';
+test q{''},			'';
+test q{''},			undef;
+test q{foo},			qw(foo);
+test q{foo bar},		qw(foo bar);
+test q{'foo*'},			qw(foo*);
+test q{'foo bar'},		 q{foo bar};
+test q{'foo'\''bar'},		qw(foo'bar);
+test q{\''foo'},		qw('foo);
+test q{foo 'bar*'},		qw(foo bar*);
+test q{'foo'\''foo' bar 'baz'\'}, qw(foo'foo bar baz');
+test q{'\'},			qw(\\);
+test q{\'},			qw(');
+test q{'\'\'},			qw(\');
+test q{'a'"''"'b'},		qw(a''b);
+test q{azAZ09_!%+,-./:@^},	 q{azAZ09_!%+,-./:@^};
+test
+    "die: shell_quote(): No way to quote string containing null (\\000) bytes",
+    "t\x00";
+
+$testsub = \&shell_quote_best_effort;
+test '';
+test q{''},			'';
+test q{''},			undef;
+test q{'foo*'},			'foo*';
+test q{'foo*' asdf},		'foo*', "as\x00df";
 
 $testsub = \&shell_comment_quote;
-test 13, '';
-test 14, 'foo',			'foo';
-test 15, "foo\n#bar",		"foo\nbar";
-test 16, "foo\n#bar\n#baz",	"foo\nbar\nbaz";
-
-eval { shell_comment_quote 'foo', 'bar' };
-ok 17, $@ =~ /^\QToo many arguments to shell_comment_quote (got 2 expected 1)/,
-    	$@;
+test '';
+test qq{foo},			qq{foo};
+test qq{foo\n#bar},		qq{foo\nbar};
+test qq{foo\n#bar\n#baz},	qq{foo\nbar\nbaz};
+test "die: Too many arguments to shell_comment_quote (got 2 expected 1)",
+	    'foo', 'bar';

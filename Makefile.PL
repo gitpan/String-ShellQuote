@@ -1,4 +1,4 @@
-# $Id: Makefile.PL,v 1.2 1997-12-07 12:05:57-05 roderick Exp $
+# $Id: Makefile.PL,v 1.3 2005/02/10 01:47:33 roderick Exp $
 #
 # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
 # program is free software; you can redistribute it and/or modify it
@@ -14,6 +14,9 @@ WriteMakefile(
     	DIST_CP		=> 'ln',
     	PREOP		=> '$(MAKE) ci',
     	SUFFIX		=> 'gz',
+
+	CI		=> 'cvs commit',
+	RCS_LABEL	=> 'cvs -q tag -F v$(VERSION_SYM)',
     },
     test		=> { TESTS => 'test.t' },
 );

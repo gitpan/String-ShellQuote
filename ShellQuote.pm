@@ -1,4 +1,4 @@
-# $Id: ShellQuote.pm,v 1.6 1997-12-07 12:08:20-05 roderick Exp $
+# $Id: ShellQuote.pm,v 1.7 2005/02/10 01:48:17 roderick Exp $
 #
 # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
 # program is free software; you can redistribute it and/or modify it
@@ -11,6 +11,7 @@ String::ShellQuote - quote strings for passing through the shell
 =head1 SYNOPSIS
 
     $string = shell_quote @list;
+    $string = shell_quote_best_effort @list;
     $string = shell_comment_quote $string;
 
 =head1 DESCRIPTION
@@ -29,9 +30,61 @@ use vars qw($VERSION @ISA @EXPORT);
 
 require Exporter;
 
-$VERSION	= '1.00';
+$VERSION	= '1.01';
 @ISA		= qw(Exporter);
-@EXPORT		= qw(shell_quote shell_comment_quote);
+@EXPORT		= qw(shell_quote shell_quote_best_effort shell_comment_quote);
+
+sub croak {
+    require Carp;
+    goto &Carp::croak;
+}
+
+sub _shell_quote_backend {
+    my @in = @_;
+    my @err = ();
+
+    if (0) {
+	require RS::Handy;
+	print RS::Handy::data_dump(\@in);
+    }
+
+    return \@err, '' unless @in;
+
+    my $ret = '';
+    foreach (@in) {
+	if (!defined $_ or $_ eq '') {
+	    $_ = "''";
+	    next;
+	}
+
+	if (s/\x00//g) {
+	    push @err, "No way to quote string containing null (\\000) bytes";
+	}
+
+	# = does need quoting else in command position it's a program-local
+	# environment setting
+
+	if (m|[^\w!%+,\-./:@^]|) {
+
+	    # ' -> '\''
+    	    s/'/'\\''/g;
+
+	    # make multiple ' in a row look simpler
+	    # '\'''\'''\'' -> '"'''"'
+    	    s|((?:'\\''){2,})|q{'"} . (q{'} x (length($1) / 4)) . q{"'}|ge;
+
+	    $_ = "'$_'";
+	    s/^''//;
+	    s/''$//;
+	}
+    }
+    continue {
+	$ret .= "$_ ";
+    }
+
+    chop $ret;
+    return \@err, $ret;
+}
 
 =item B<shell_quote> [I<string>]...
 
@@ -40,25 +93,34 @@ Each I<string> is quoted so that the shell will pass it along as a
 single argument and without further interpretation.  If no I<string>s
 are given an empty string is returned.
 
+If any I<string> can't be safely quoted B<shell_quote> will B<croak>.
+
 =cut
 
 sub shell_quote {
-    my @in = @_;
-    return '' unless @in;
-    my $ret = '';
-    foreach (@in) {
-	if (!defined $_ or $_ eq '') {
-	    $_ = "''";
-	} elsif (/[^\w\d.\-\/]/) {
-	    s/\'/\'\\\'\'/g;
-	    $_ = "'$_'";
-	    s/^''//;
-	    s/''$//;
-	}
-	$ret .= "$_ ";
+    my ($rerr, $s) = _shell_quote_backend @_;
+
+    if (@$rerr) {
+    	my %seen;
+    	@$rerr = grep { !$seen{$_}++ } @$rerr;
+	my $s = join '', map { "shell_quote(): $_\n" } @$rerr;
+	chomp $s;
+	croak $s;
     }
-    chop $ret;
-    return $ret;
+    return $s;
+}
+
+=item B<shell_quote_best_effort> [I<string>]...
+
+This is like B<shell_quote>, excpet if the string can't be safely quoted
+it does the best it can and returns the result, instead of dying.
+
+=cut
+
+sub shell_quote_best_effort {
+    my ($rerr, $s) = _shell_quote_backend @_;
+
+    return $s;
 }
 
 =item B<shell_comment_quote> [I<string>]
@@ -77,9 +139,8 @@ your vote today!  Be sure to justify your answer.
 sub shell_comment_quote {
     return '' unless @_;
     unless (@_ == 1) {
-    	require Carp;
-	Carp::croak("Too many arguments to shell_comment_quote "
-	    	    . "(got " . @_ . " expected 1)");
+	croak "Too many arguments to shell_comment_quote "
+	    	    . "(got " . @_ . " expected 1)";
     }
     local $_ = shift;
     s/\n/\n#/g;
