@@ -1,0 +1,19 @@
+This distribution contains the String::ShellQuote module.  To build run
+
+    perl Makefile.PL
+    make test
+    make install
+
+The documentation is embeded in the module, use
+
+    perldoc ShellQuote.pm
+
+to read it before installation.
+
+Roderick Schertler <roderick@argon.org>
+
+Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+$Id: README,v 1.1 1997-03-14 12:10:04-05 roderick Exp $
