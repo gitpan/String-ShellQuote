@@ -1,4 +1,4 @@
-# $Id: ShellQuote.pm,v 1.4 1997-05-13 22:28:50-04 roderick Exp $
+# $Id: ShellQuote.pm,v 1.6 1997-12-07 12:08:20-05 roderick Exp $
 #
 # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
 # program is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ use vars qw($VERSION @ISA @EXPORT);
 
 require Exporter;
 
-$VERSION	= '0.01';
+$VERSION	= '1.00';
 @ISA		= qw(Exporter);
 @EXPORT		= qw(shell_quote shell_comment_quote);
 
@@ -50,8 +50,10 @@ sub shell_quote {
 	if (!defined $_ or $_ eq '') {
 	    $_ = "''";
 	} elsif (/[^\w\d.\-\/]/) {
-	    s/'/'\\''/g;
+	    s/\'/\'\\\'\'/g;
 	    $_ = "'$_'";
+	    s/^''//;
+	    s/''$//;
 	}
 	$ret .= "$_ ";
     }

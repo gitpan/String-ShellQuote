@@ -1,4 +1,4 @@
-# $Id: Makefile.PL,v 1.1 1997-03-14 12:10:04-05 roderick Exp $
+# $Id: Makefile.PL,v 1.2 1997-12-07 12:05:57-05 roderick Exp $
 #
 # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
 # program is free software; you can redistribute it and/or modify it
@@ -15,4 +15,5 @@ WriteMakefile(
     	PREOP		=> '$(MAKE) ci',
     	SUFFIX		=> 'gz',
     },
+    test		=> { TESTS => 'test.t' },
 );
