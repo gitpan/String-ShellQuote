@@ -1,4 +1,4 @@
-# $Id: ShellQuote.pm,v 1.7 2005/02/10 01:48:17 roderick Exp $
+# $Id: ShellQuote.pm,v 1.8 2005/02/10 02:08:27 roderick Exp $
 #
 # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
 # program is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@ use vars qw($VERSION @ISA @EXPORT);
 
 require Exporter;
 
-$VERSION	= '1.01';
+$VERSION	= '1.02';
 @ISA		= qw(Exporter);
 @EXPORT		= qw(shell_quote shell_quote_best_effort shell_comment_quote);
 
