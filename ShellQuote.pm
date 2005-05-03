@@ -1,4 +1,4 @@
-# $Id: ShellQuote.pm,v 1.8 2005/02/10 02:08:27 roderick Exp $
+# $Id: ShellQuote.pm,v 1.9 2005/05/03 10:53:33 roderick Exp $
 #
 # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
 # program is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@ use vars qw($VERSION @ISA @EXPORT);
 
 require Exporter;
 
-$VERSION	= '1.02';
+$VERSION	= '1.03';
 @ISA		= qw(Exporter);
 @EXPORT		= qw(shell_quote shell_quote_best_effort shell_comment_quote);
 
@@ -160,6 +160,12 @@ __END__
 
     print CFG "# Configured by: ",
 		shell_comment_quote($ENV{LOGNAME}), "\n";
+
+=head1 BUGS
+
+Only Bourne shell quoting is supported.  I'd like to add other shells
+(particularly cmd.exe), but I'm not familiar with them.  It would be a
+big help if somebody supplied the details.
 
 =head1 AUTHOR
 

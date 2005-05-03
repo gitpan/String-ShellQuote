@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 
-# $Id: test.t,v 1.3 2005/02/10 01:48:17 roderick Exp $
+# $Id: test.t,v 1.4 2005/05/03 10:53:33 roderick Exp $
 #
 # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
 # program is free software; you can redistribute it and/or modify it
@@ -9,7 +9,7 @@ use strict;
 
 BEGIN {
     $| = 1;
-    print "1..27\n";
+    print "1..31\n";
 }
 
 use String::ShellQuote;
@@ -30,7 +30,9 @@ sub ok {
 my $testsub;
 sub test {
     my ($want, @args) = @_;
+    my $pid = $$;
     my $got = eval { &$testsub(@args) };
+    exit if $$ != $pid;
     if ($@) {
 	chomp $@;
 	$@ =~ s/ at \S+ line \d+\.?\z//;
@@ -76,3 +78,30 @@ test qq{foo\n#bar},		qq{foo\nbar};
 test qq{foo\n#bar\n#baz},	qq{foo\nbar\nbaz};
 test "die: Too many arguments to shell_comment_quote (got 2 expected 1)",
 	    'foo', 'bar';
+
+sub via_shell {
+    my @args = @_;
+    my $cmd = 'blib/script/shell-quote';
+    my $pid = open PIPE, '-|';
+    defined $pid
+	or return "can't fork: $!\n";
+    if (!$pid) {
+    	if (!open STDERR, '>&STDOUT') {
+    	    print "$0: can't dup stdout: $!\n";
+	    exit 1;
+	}
+	exec $cmd, @args
+	    or die "$0: can't run $cmd: $!\n";
+    }
+    my $r = join '', <PIPE>;
+    if (!close PIPE) {
+	$r .= "$cmd failed: " . ($! ? $! : "non-zero exit $?") . "\n";
+    }
+    return $r;
+}
+
+$testsub = \&via_shell;
+test '';
+test qq{a\n},			'a';
+test qq{''\n},			'';
+test qq{foo 'bar baz' '*'\n},	'foo', 'bar baz', '*';

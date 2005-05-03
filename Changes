@@ -1,6 +1,10 @@
 Revision history for Perl extension String::ShellQuote.
 
-1.02
+1.03  Tue May  3 06:47:39 EDT 2005
+
+    - Add shell-quote script.
+
+1.02  Thu Feb 10 22:08:27 EST 2005
 
     - Allow qw(! % + , : @ ^) to appear without being quoted.  (This was
       in 1.01, but I forgot to mention it.)
@@ -20,4 +24,4 @@ Revision history for Perl extension String::ShellQuote.
 
     - Initial version.
 
-$Id: Changes,v 1.4 2005/02/10 02:08:27 roderick Exp $
+$Id: Changes,v 1.5 2005/05/03 10:53:33 roderick Exp $
