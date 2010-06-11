@@ -1,4 +1,4 @@
-# $Id: Makefile.PL,v 1.4 2005/05/03 10:44:03 roderick Exp $
+# $Id: Makefile.PL,v 1.5 2010-06-11 20:00:24 roderick Exp $
 #
 # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
 # program is free software; you can redistribute it and/or modify it
@@ -9,7 +9,11 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     NAME		=> 'String::ShellQuote',
     VERSION_FROM	=> 'ShellQuote.pm',
-    EXE_FILES		=> ['shell-quote'],
+    (
+	$^O eq 'MSWin32'
+	    ? ()
+	    : (EXE_FILES => ['shell-quote'])
+    ),
     dist		=> {
     	PREOP		=> '$(MAKE) ci',
 	CI		=> 'cvs commit',

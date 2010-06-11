@@ -1,4 +1,4 @@
-# $Id: ShellQuote.pm,v 1.9 2005/05/03 10:53:33 roderick Exp $
+# $Id: ShellQuote.pm,v 1.11 2010-06-11 20:08:57 roderick Exp $
 #
 # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
 # program is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@ use vars qw($VERSION @ISA @EXPORT);
 
 require Exporter;
 
-$VERSION	= '1.03';
+$VERSION	= '1.04';
 @ISA		= qw(Exporter);
 @EXPORT		= qw(shell_quote shell_quote_best_effort shell_comment_quote);
 
@@ -51,6 +51,7 @@ sub _shell_quote_backend {
     return \@err, '' unless @in;
 
     my $ret = '';
+    my $saw_non_equal = 0;
     foreach (@in) {
 	if (!defined $_ or $_ eq '') {
 	    $_ = "''";
@@ -61,10 +62,27 @@ sub _shell_quote_backend {
 	    push @err, "No way to quote string containing null (\\000) bytes";
 	}
 
-	# = does need quoting else in command position it's a program-local
-	# environment setting
+    	my $escape = 0;
 
-	if (m|[^\w!%+,\-./:@^]|) {
+	# = needs quoting when it's the first element (or part of a
+	# series of such elements), as in command position it's a
+	# program-local environment setting
+
+	if (/=/) {
+	    if (!$saw_non_equal) {
+	    	$escape = 1;
+	    }
+	}
+	else {
+	    $saw_non_equal = 1;
+	}
+
+	if (m|[^\w!%+,\-./:=@^]|) {
+	    $escape = 1;
+	}
+
+	if ($escape
+		|| (!$saw_non_equal && /=/)) {
 
 	    # ' -> '\''
     	    s/'/'\\''/g;

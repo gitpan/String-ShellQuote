@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 
-# $Id: test.t,v 1.4 2005/05/03 10:53:33 roderick Exp $
+# $Id: test.t,v 1.6 2010-06-11 20:08:57 roderick Exp $
 #
 # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
 # program is free software; you can redistribute it and/or modify it
@@ -9,7 +9,7 @@ use strict;
 
 BEGIN {
     $| = 1;
-    print "1..31\n";
+    print "1..33\n";
 }
 
 use String::ShellQuote;
@@ -19,10 +19,10 @@ sub ok {
     my ($result, @info) = @_;
     $test_num++;
     if ($result) {
-    	print "ok $test_num\n";
+	print "ok $test_num\n";
     }
     else {
-    	print "not ok $test_num\n";
+	print "not ok $test_num\n";
 	print "# ", @info, "\n" if @info;
     }
 }
@@ -60,6 +60,8 @@ test q{\'},			qw(');
 test q{'\'\'},			qw(\');
 test q{'a'"''"'b'},		qw(a''b);
 test q{azAZ09_!%+,-./:@^},	 q{azAZ09_!%+,-./:@^};
+test q{'foo=bar' command},	qw(foo=bar command);
+test q{'foo=bar' 'baz=quux' command}, qw(foo=bar baz=quux command);
 test
     "die: shell_quote(): No way to quote string containing null (\\000) bytes",
     "t\x00";
@@ -86,8 +88,8 @@ sub via_shell {
     defined $pid
 	or return "can't fork: $!\n";
     if (!$pid) {
-    	if (!open STDERR, '>&STDOUT') {
-    	    print "$0: can't dup stdout: $!\n";
+	if (!open STDERR, '>&STDOUT') {
+	    print "$0: can't dup stdout: $!\n";
 	    exit 1;
 	}
 	exec $cmd, @args
@@ -100,8 +102,12 @@ sub via_shell {
     return $r;
 }
 
-$testsub = \&via_shell;
-test '';
-test qq{a\n},			'a';
-test qq{''\n},			'';
-test qq{foo 'bar baz' '*'\n},	'foo', 'bar baz', '*';
+if ($^O eq 'MSWin32') {
+    print "ok # skip not working on MSWin32\n" x 4;
+} else {
+    $testsub = \&via_shell;
+    test '';
+    test qq{a\n},			'a';
+    test qq{''\n},			'';
+    test qq{foo 'bar baz' '*'\n},	'foo', 'bar baz', '*';
+}
